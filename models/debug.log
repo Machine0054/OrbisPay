@@ -1,0 +1,13 @@
+2025-10-31 11:45:31 - ================== INICIO DE LA PETICIÓN ==================
+2025-10-31 11:45:31 - Autenticación exitosa. Usuario ID: 1
+2025-10-31 11:45:31 - Método POST correcto.
+2025-10-31 11:45:31 - Conexión a la BD establecida.
+2025-10-31 11:45:31 - Datos recibidos: Concepto='prueba', Monto='3000', Categoria='ingresos extras 2'
+2025-10-31 11:45:31 - Validaciones básicas pasadas.
+2025-10-31 11:45:31 - Iniciando bloque de verificación/creación de categoría.
+2025-10-31 11:45:31 - Verificación de categoría ejecutada. Filas encontradas: 0
+2025-10-31 11:45:31 - La categoría 'ingresos extras 2' no existe. Creando...
+2025-10-31 11:45:31 - Creación de categoría ejecutada. ID insertado: 6
+2025-10-31 11:45:31 - Bloque de categoría completado exitosamente.
+2025-10-31 11:45:31 - Iniciando bloque de inserción de ingreso.
+2025-10-31 11:45:31 - ¡EXCEPCIÓN en el bloque de inserción de ingreso!: Data truncated for column 'categoria' at row 1

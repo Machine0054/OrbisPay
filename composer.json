@@ -1,0 +1,6 @@
+{
+    "require": {
+        "google/apiclient": "^2.17",
+        "sendgrid/sendgrid": "^8.1"
+    }
+}

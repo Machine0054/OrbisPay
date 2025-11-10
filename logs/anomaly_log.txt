@@ -1,0 +1,33 @@
+[2025-09-26 11:48:59] Análisis de Anomalía para Usuario 1, Categoría 1:
+Monto del Gasto Actual: 258900.00
+Promedio de la Categoría (avg_monto): 258900.00
+Desviación Estándar (std_dev_monto): 0.00
+Umbral de Alerta Calculado (avg + 2*stddev): 258900.00
+¿El monto actual supera el umbral?: NO
+-------------------------------------------------
+[2025-09-26 11:50:21] Análisis de Anomalía para Usuario 1, Categoría 2:
+Monto del Gasto Actual: 258900.00
+Promedio de la Categoría (avg_monto): 258900.00
+Desviación Estándar (std_dev_monto): 0.00
+Umbral de Alerta Calculado (avg + 2*stddev): 258900.00
+¿El monto actual supera el umbral?: NO
+-------------------------------------------------
+[2025-09-26 12:05:22] Análisis de Anomalía para Usuario 1, Categoría 1:
+Monto del Gasto Actual: 258900.00
+Promedio de la Categoría (avg_monto): 0.00
+Desviación Estándar (std_dev_monto): 0.00
+No se calculó umbral porque no hay promedio para esta categoría.
+-------------------------------------------------
+[2025-09-26 12:06:07] Análisis de Anomalía para Usuario 1, Categoría 1:
+Monto del Gasto Actual: 12000.00
+Promedio de la Categoría (avg_monto): 0.00
+Desviación Estándar (std_dev_monto): 0.00
+No se calculó umbral porque no hay promedio para esta categoría.
+-------------------------------------------------
+[2025-09-26 12:06:18] Análisis de Anomalía para Usuario 1, Categoría 1:
+Monto del Gasto Actual: 258900.00
+Promedio de la Categoría (avg_monto): 12000.00
+Desviación Estándar (std_dev_monto): 0.00
+Umbral de Alerta Calculado (avg + 2*stddev): 12000.00
+¿El monto actual supera el umbral?: SÍ
+-------------------------------------------------
