@@ -255,16 +255,15 @@ function obtenerTransacciones($conn, $usuario_id) {
         $limit_param = filter_input(INPUT_POST, 'limit', FILTER_VALIDATE_INT, ['options' => ['default' => 8]]);
         $isExportRequest = ($limit_param === -1);
         $page = filter_input(INPUT_POST, 'page', FILTER_VALIDATE_INT, ['options' => ['default' => 1, 'min_range' => 1]]);
-        $limit = 8; 
-        $offset = ($page - 1) * $limit;
+        
         $baseQuery = "
             (
-                -- Parte de los Gastos: Selecciona 'categoria' directamente del VARCHAR
+                -- Parte de los Gastos
                 SELECT 
                     id, 
                     fecha_gasto AS fecha, 
                     descripcion, 
-                    categoria, -- Se selecciona directamente de la columna VARCHAR
+                    categoria,
                     'Gasto' AS tipo, 
                     monto, 
                     fecha_registro 
@@ -273,12 +272,12 @@ function obtenerTransacciones($conn, $usuario_id) {
             )
             UNION ALL
             (
-                -- Parte de los Ingresos: Usa JOIN para obtener el nombre de la categoría
+                -- Parte de los Ingresos
                 SELECT 
                     i.id, 
                     i.fecha, 
                     i.concepto AS descripcion, 
-                    ci.nombre_categoria AS categoria, -- Se obtiene con el JOIN
+                    ci.nombre_categoria AS categoria,
                     'Ingreso' AS tipo, 
                     i.monto, 
                     i.creado_en AS fecha_registro 
@@ -287,10 +286,12 @@ function obtenerTransacciones($conn, $usuario_id) {
                 WHERE i.usuario_id = ?
             )
         ";
+        
         $whereConditions = [];
         $params = [$usuario_id, $usuario_id];
         $types = "ii";
 
+        // Filtros de período
         if ($periodo === 'day') {
             $whereConditions[] = "DATE(fecha) = CURDATE()";
         } elseif ($periodo === 'week') {
@@ -302,28 +303,27 @@ function obtenerTransacciones($conn, $usuario_id) {
             $params[] = $start_date;
             $params[] = $end_date;
             $types .= "ss";
-        } else { 
-            $whereConditions[] = "MONTH(fecha) = MONTH(CURDATE()) AND YEAR(fecha) = YEAR(CURDATE())";
-        }
+         } 
+        //else { 
+        //     $whereConditions[] = "MONTH(fecha) = MONTH(CURDATE()) AND YEAR(fecha) = YEAR(CURDATE())";
+        // }
 
         $whereClause = count($whereConditions) > 0 ? 'WHERE ' . implode(' AND ', $whereConditions) : '';
         
-        $countQuery = "SELECT COUNT(*) as total FROM ({$baseQuery}) AS transacciones {$whereClause}";
-        $stmtCount = $conn->prepare($countQuery);
-        if (!$stmtCount) throw new Exception("Error al preparar la consulta de conteo: " . $conn->error);
-        
-        $stmtCount->bind_param($types, ...$params);
-        $stmtCount->execute();
-        $totalRows = $stmtCount->get_result()->fetch_assoc()['total'] ?? 0;
-        $totalPages = ceil($totalRows / $limit);
-        $stmtCount->close();
-    
+        // Construir consulta base
         $finalQuery = "SELECT * FROM ({$baseQuery}) AS transacciones {$whereClause} ORDER BY fecha DESC, fecha_registro DESC";
         $paginationData = null;
-       if (!$isExportRequest) {
+        //print_r($finalQuery);
+        // Solo aplicar paginación si NO es una exportación
+        if (!$isExportRequest) {
+            $limit = 8;
+            $offset = ($page - 1) * $limit;
             
+            // Contar total de registros para paginación
             $countQuery = "SELECT COUNT(*) as total FROM ({$baseQuery}) AS transacciones {$whereClause}";
             $stmtCount = $conn->prepare($countQuery);
+            if (!$stmtCount) throw new Exception("Error al preparar la consulta de conteo: " . $conn->error);
+            
             $stmtCount->bind_param($types, ...$params);
             $stmtCount->execute();
             $totalRows = $stmtCount->get_result()->fetch_assoc()['total'] ?? 0;
@@ -337,18 +337,23 @@ function obtenerTransacciones($conn, $usuario_id) {
                 'limit' => $limit
             ];
 
+            // Agregar LIMIT y OFFSET a la consulta
             $finalQuery .= " LIMIT ? OFFSET ?";
             $params[] = $limit;
             $params[] = $offset;
             $types .= "ii";
         }
         
+        // Ejecutar la consulta final
         $stmt = $conn->prepare($finalQuery);
         if (!$stmt) throw new Exception("Error al preparar la consulta de datos: " . $conn->error);
+        
         $stmt->bind_param($types, ...$params);
         $stmt->execute();
         $result = $stmt->get_result();
         $transacciones = $result->fetch_all(MYSQLI_ASSOC);
+        
+        // Convertir montos a float
         foreach ($transacciones as &$t) {
             $t['monto'] = floatval($t['monto']);
         }
@@ -366,7 +371,7 @@ function obtenerTransacciones($conn, $usuario_id) {
         $stmt->close();
 
     } catch (Exception $e) {
-        http_response_code(500 );
+        http_response_code(500);
         echo json_encode([
             'success' => false,
             'message' => $e->getMessage()
@@ -580,25 +585,28 @@ function obtenerTendenciaMensual($conn, $usuario_id) {
 
 function obtenerProyeccionSaldo($conn, $usuario_id) {
     try {
+        $sql_mes_actual = "SELECT 
+                                COALESCE(SUM(CASE WHEN tipo = 'Ingreso' THEN monto ELSE 0 END), 0) as ingresos_mes_actual,
+                                COALESCE(SUM(CASE WHEN tipo = 'Gasto' THEN monto ELSE 0 END), 0) as gastos_mes_actual
+                           FROM T_TRANSACCIONES 
+                           WHERE id_usuario = ? 
+                             AND MONTH(fecha) = MONTH(CURDATE())
+                             AND YEAR(fecha) = YEAR(CURDATE())";
         
-        $sql_saldo = "SELECT 
-                        (SELECT COALESCE(SUM(monto), 0) FROM T_TRANSACCIONES WHERE id_usuario = ? AND tipo = 'Ingreso') - 
-                        (SELECT COALESCE(SUM(monto), 0) FROM T_TRANSACCIONES WHERE id_usuario = ? AND tipo = 'Gasto') 
-                      AS saldo_actual";
-        $stmt_saldo = $conn->prepare($sql_saldo);
-        $stmt_saldo->bind_param("ii", $usuario_id, $usuario_id);
-        $stmt_saldo->execute();
-        $saldo_actual = $stmt_saldo->get_result()->fetch_assoc()['saldo_actual'] ?? 0;
-        $stmt_saldo->close();
+        $stmt_mes_actual = $conn->prepare($sql_mes_actual);
+        $stmt_mes_actual->bind_param("i", $usuario_id);
+        $stmt_mes_actual->execute();
+        $result = $stmt_mes_actual->get_result()->fetch_assoc();
+        $ingresos_mes_actual = $result['ingresos_mes_actual'] ?? 0;
+        $gastos_mes_actual = $result['gastos_mes_actual'] ?? 0;
+        $stmt_mes_actual->close();
 
         $sql_gastos_avg = "
             SELECT AVG(gastos_diarios) as promedio_gasto_diario
             FROM (
                 SELECT SUM(monto) as gastos_diarios
                 FROM T_TRANSACCIONES
-                WHERE id_usuario = ? 
-                  AND tipo = 'Gasto'
-                  AND fecha >= DATE_SUB(CURDATE(), INTERVAL 60 DAY)
+                WHERE id_usuario = ? AND tipo = 'Gasto' AND fecha >= DATE_SUB(CURDATE(), INTERVAL 60 DAY)
                 GROUP BY fecha
             ) as subquery
             WHERE gastos_diarios < (
@@ -618,9 +626,10 @@ function obtenerProyeccionSaldo($conn, $usuario_id) {
         $stmt_gastos_avg->close();
 
        
-        $dias_restantes = date('t') - date('j'); // Días en el mes actual - día actual
-        $gastos_proyectados = $promedio_gasto_diario * $dias_restantes;
+        $dias_restantes = date('t') - date('j'); // Días que quedan en el mes.
+        $gastos_proyectados_restantes = $promedio_gasto_diario * $dias_restantes;
 
+       
         $sql_ingresos_rec = "SELECT COALESCE(SUM(monto), 0) as ingresos_recurrentes_restantes
                              FROM T_TRANSACCIONES
                              WHERE id_usuario = ?
@@ -636,17 +645,21 @@ function obtenerProyeccionSaldo($conn, $usuario_id) {
         $stmt_ingresos_rec->close();
 
         
-        $proyeccion_final = $saldo_actual + $ingresos_recurrentes_restantes - $gastos_proyectados;
+        $proyeccion_ingresos_totales_mes = $ingresos_mes_actual + $ingresos_recurrentes_restantes;
+        $proyeccion_gastos_totales_mes = $gastos_mes_actual + $gastos_proyectados_restantes;
+        $proyeccion_saldo_fin_de_mes = $proyeccion_ingresos_totales_mes - $proyeccion_gastos_totales_mes;
 
         echo json_encode([
             'success' => true,
             'data' => [
-                'saldo_actual' => floatval($saldo_actual),
+                'proyeccion_final' => floatval($proyeccion_saldo_fin_de_mes),
+                'ingresos_mes_actual' => floatval($ingresos_mes_actual),
+                'gastos_mes_actual' => floatval($gastos_mes_actual),
                 'promedio_gasto_diario' => floatval($promedio_gasto_diario),
-                'dias_restantes' => intval($dias_restantes),
-                'gastos_proyectados' => floatval($gastos_proyectados),
+                'gastos_proyectados_restantes' => floatval($gastos_proyectados_restantes),
                 'ingresos_recurrentes_restantes' => floatval($ingresos_recurrentes_restantes),
-                'proyeccion_final' => floatval($proyeccion_final)
+                'proyeccion_ingresos_totales_mes' => floatval($proyeccion_ingresos_totales_mes),
+                'proyeccion_gastos_totales_mes' => floatval($proyeccion_gastos_totales_mes)
             ]
         ]);
 
@@ -656,79 +669,250 @@ function obtenerProyeccionSaldo($conn, $usuario_id) {
     }
 }
 
-
-function detectarGastosRecurrentes($conn, $usuario_id) {
+function detectarGastosRecurrentes($conn, $usuario_id)
+{
     try {
-        
-        $sql = "SELECT
-                    TRIM(SUBSTRING_INDEX(descripcion, ' ', 2)) AS descripcion_base, 
+        // 1. GASTOS CONFIRMADOS (Alta confianza: 3+ meses, patrón claro)
+        $sqlConfirmados = "
+            WITH gastos_agrupados AS (
+                SELECT 
+                    LOWER(TRIM(SUBSTRING_INDEX(descripcion, ' ', 3))) AS descripcion_base,
+                    ROUND(monto, -2) AS monto_rango,
+                    DATE_FORMAT(fecha_gasto, '%Y-%m') AS mes_ano,
+                    fecha_gasto,
+                    monto
+                FROM T_GASTOS
+                WHERE usuario_id = ?
+                    AND fecha_gasto >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)
+            ),
+            analisis AS (
+                SELECT 
+                    descripcion_base,
+                    COUNT(DISTINCT mes_ano) AS meses_detectados,
+                    COUNT(*) AS total_transacciones,
                     AVG(monto) AS monto_promedio,
-                    COUNT(DISTINCT DATE_FORMAT(fecha, '%Y-%m')) AS meses_detectado,
-                    MAX(fecha) AS fecha_ultimo_pago,
-                    GROUP_CONCAT(id_transaccion) AS ids_transacciones
-                FROM 
-                    T_TRANSACCIONES
-                WHERE 
-                    id_usuario = ? 
-                    AND tipo = 'Gasto'
-                    AND fecha >= DATE_SUB(CURDATE(), INTERVAL 4 MONTH)
-                GROUP BY
-                    descripcion_base, ROUND(monto, -3)
-                HAVING 
-                    meses_detectado >= 2
-                ORDER BY
-                    monto_promedio DESC";
-        
-        $stmt = $conn->prepare($sql);
-        if (!$stmt) {
-            throw new Exception("Error al preparar la consulta: " . $conn->error);
-        }
-        
+                    MIN(monto) AS monto_minimo,
+                    MAX(monto) AS monto_maximo,
+                    STDDEV(monto) AS desviacion_monto,
+                    MAX(fecha_gasto) AS fecha_ultimo_pago,
+                    MIN(fecha_gasto) AS fecha_primer_pago,
+                    DATEDIFF(CURDATE(), MAX(fecha_gasto)) AS dias_desde_ultimo,
+                    DATEDIFF(MAX(fecha_gasto), MIN(fecha_gasto)) AS dias_totales
+                FROM gastos_agrupados
+                GROUP BY descripcion_base
+            )
+            SELECT 
+                descripcion_base,
+                monto_promedio,
+                monto_minimo,
+                monto_maximo,
+                desviacion_monto,
+                meses_detectados AS repeticiones,
+                fecha_ultimo_pago,
+                dias_desde_ultimo,
+                CASE
+                    WHEN dias_totales = 0 THEN 30
+                    ELSE ROUND(dias_totales / GREATEST(total_transacciones - 1, 1))
+                END AS promedio_dias_entre_pagos,
+                CASE 
+                    WHEN desviacion_monto IS NULL OR desviacion_monto < 100 THEN 'FIJO'
+                    WHEN desviacion_monto < monto_promedio * 0.15 THEN 'FIJO'
+                    ELSE 'VARIABLE'
+                END AS patron_monto,
+                ROUND((meses_detectados / 6.0) * 100) AS confianza
+            FROM analisis
+            WHERE meses_detectados >= 3
+            ORDER BY monto_promedio DESC
+        ";
+
+        $stmt = $conn->prepare($sqlConfirmados);
         $stmt->bind_param("i", $usuario_id);
         $stmt->execute();
-        $result = $stmt->get_result();
-        $gastos_recurrentes = $result->fetch_all(MYSQLI_ASSOC);
+        $confirmados = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
         $stmt->close();
 
-       
-        if (count($gastos_recurrentes) > 0) {
-            $total_recurrente = array_sum(array_column($gastos_recurrentes, 'monto_promedio'));
-            $cantidad_recurrente = count($gastos_recurrentes);
-            
-            $mensaje = sprintf(
-                "Detectamos %d pagos recurrentes este mes, sumando un total aproximado de $%s.",
-                $cantidad_recurrente,
-                number_format($total_recurrente, 0, ',', '.')
-            );
+        // 2. GASTOS PROBABLES (Confianza media: 2 meses)
+        $sqlProbables = "
+            WITH gastos_agrupados AS (
+                SELECT 
+                    LOWER(TRIM(SUBSTRING_INDEX(descripcion, ' ', 3))) AS descripcion_base,
+                    DATE_FORMAT(fecha_gasto, '%Y-%m') AS mes_ano,
+                    fecha_gasto,
+                    monto
+                FROM T_GASTOS
+                WHERE usuario_id = ?
+                    AND fecha_gasto >= DATE_SUB(CURDATE(), INTERVAL 4 MONTH)
+            ),
+            analisis AS (
+                SELECT 
+                    descripcion_base,
+                    COUNT(DISTINCT mes_ano) AS meses_detectados,
+                    COUNT(*) AS total_transacciones,
+                    AVG(monto) AS monto_promedio,
+                    STDDEV(monto) AS desviacion_monto,
+                    MAX(fecha_gasto) AS fecha_ultimo_pago,
+                    DATEDIFF(CURDATE(), MAX(fecha_gasto)) AS dias_desde_ultimo,
+                    DATEDIFF(MAX(fecha_gasto), MIN(fecha_gasto)) AS dias_totales
+                FROM gastos_agrupados
+                GROUP BY descripcion_base
+            )
+            SELECT 
+                descripcion_base,
+                monto_promedio,
+                meses_detectados AS repeticiones,
+                fecha_ultimo_pago,
+                dias_desde_ultimo,
+                CASE
+                    WHEN dias_totales = 0 THEN 30
+                    ELSE ROUND(dias_totales / GREATEST(total_transacciones - 1, 1))
+                END AS promedio_dias_entre_pagos,
+                CASE 
+                    WHEN desviacion_monto IS NULL OR desviacion_monto < 100 THEN 'FIJO'
+                    ELSE 'VARIABLE'
+                END AS patron_monto,
+                75 AS confianza
+            FROM analisis
+            WHERE meses_detectados = 2
+            ORDER BY monto_promedio DESC
+        ";
 
-            $sql_notif = "INSERT INTO T_NOTIFICACIONES (id_usuario, tipo, mensaje) VALUES (?, 'gasto_recurrente', ?)";
-            $stmt_notif = $conn->prepare($sql_notif);
-            $stmt_notif->bind_param("is", $usuario_id, $mensaje);
-            $stmt_notif->execute();
-            $stmt_notif->close();
+        $stmt2 = $conn->prepare($sqlProbables);
+        $stmt2->bind_param("i", $usuario_id);
+        $stmt2->execute();
+        $probables = $stmt2->get_result()->fetch_all(MYSQLI_ASSOC);
+        $stmt2->close();
+
+        // 3. POR CONFIRMAR (Baja detección pero posible patrón)
+        $sqlPorConfirmar = "
+            WITH gastos_similares AS (
+                SELECT 
+                    LOWER(TRIM(SUBSTRING_INDEX(descripcion, ' ', 3))) AS descripcion_base,
+                    ROUND(monto, -2) AS monto_rango,
+                    COUNT(*) AS repeticiones,
+                    AVG(monto) AS monto_promedio,
+                    MAX(fecha_gasto) AS fecha_ultimo_pago,
+                    DATEDIFF(CURDATE(), MAX(fecha_gasto)) AS dias_desde_ultimo
+                FROM T_GASTOS
+                WHERE usuario_id = ?
+                    AND fecha_gasto >= DATE_SUB(CURDATE(), INTERVAL 3 MONTH)
+                GROUP BY descripcion_base, monto_rango
+            )
+            SELECT 
+                descripcion_base,
+                monto_promedio,
+                repeticiones,
+                fecha_ultimo_pago,
+                dias_desde_ultimo,
+                'FIJO' AS patron_monto,
+                60 AS confianza,
+                'Solo detectado 2 veces - ¿Es un pago recurrente?' AS razon
+            FROM gastos_similares
+            WHERE repeticiones = 2
+            ORDER BY monto_promedio DESC
+            LIMIT 5
+        ";
+
+        $stmt3 = $conn->prepare($sqlPorConfirmar);
+        $stmt3->bind_param("i", $usuario_id);
+        $stmt3->execute();
+        $porConfirmar = $stmt3->get_result()->fetch_all(MYSQLI_ASSOC);
+        $stmt3->close();
+
+        // Función para parsear números
+        function parseNumber($n) {
+            if (is_numeric($n)) return floatval($n);
+            if (preg_match('/^\d{1,3}(,\d{3})*(\.\d+)?$/', $n)) {
+                return floatval(str_replace(',', '', $n));
+            }
+            if (preg_match('/^\d{1,3}(\.\d{3})*(,\d+)?$/', $n)) {
+                $n = str_replace('.', '', $n);
+                $n = str_replace(',', '.', $n);
+                return floatval($n);
+            }
+            return floatval($n);
         }
-        $total_mensual_recurrente = 0;
-        foreach ($gastos_recurrentes as &$gasto) {
-            $gasto['monto_promedio'] = floatval($gasto['monto_promedio']);
-            $total_mensual_recurrente += $gasto['monto_promedio'];
+
+        // Procesar confirmados
+        foreach ($confirmados as &$c) {
+            $c["monto_promedio"] = parseNumber($c["monto_promedio"]);
+            $c["monto_minimo"] = parseNumber($c["monto_minimo"] ?? 0);
+            $c["monto_maximo"] = parseNumber($c["monto_maximo"] ?? 0);
+            $c["repeticiones"] = intval($c["repeticiones"]);
+            $c["dias_desde_ultimo"] = intval($c["dias_desde_ultimo"]);
+            $c["promedio_dias_entre_pagos"] = intval($c["promedio_dias_entre_pagos"]);
+            $c["confianza"] = intval($c["confianza"]);
+            
+            // Calcular próximo pago estimado
+            $proximoPago = date('Y-m-d', strtotime($c["fecha_ultimo_pago"] . ' + ' . $c["promedio_dias_entre_pagos"] . ' days'));
+            $c["proximo_pago_estimado"] = $proximoPago;
+            $c["dias_hasta_proximo"] = intval((strtotime($proximoPago) - time()) / 86400);
+            
+            // Variación porcentual
+            if ($c["patron_monto"] === 'VARIABLE' && $c["monto_promedio"] > 0) {
+                $c["variacion_porcentaje"] = round((($c["monto_maximo"] - $c["monto_minimo"]) / $c["monto_promedio"]) * 100);
+            } else {
+                $c["variacion_porcentaje"] = 0;
+            }
         }
+
+        // Procesar probables
+        foreach ($probables as &$p) {
+            $p["monto_promedio"] = parseNumber($p["monto_promedio"]);
+            $p["repeticiones"] = intval($p["repeticiones"]);
+            $p["dias_desde_ultimo"] = intval($p["dias_desde_ultimo"]);
+            $p["promedio_dias_entre_pagos"] = intval($p["promedio_dias_entre_pagos"]);
+            $p["confianza"] = intval($p["confianza"]);
+            
+            $proximoPago = date('Y-m-d', strtotime($p["fecha_ultimo_pago"] . ' + ' . $p["promedio_dias_entre_pagos"] . ' days'));
+            $p["proximo_pago_estimado"] = $proximoPago;
+            $p["dias_hasta_proximo"] = intval((strtotime($proximoPago) - time()) / 86400);
+            $p["variacion_porcentaje"] = 0;
+        }
+
+        // Procesar por confirmar
+        foreach ($porConfirmar as &$pc) {
+            $pc["monto_promedio"] = parseNumber($pc["monto_promedio"]);
+            $pc["repeticiones"] = intval($pc["repeticiones"]);
+            $pc["dias_desde_ultimo"] = intval($pc["dias_desde_ultimo"]);
+            $pc["confianza"] = intval($pc["confianza"]);
+        }
+
+        // Calcular totales y proyecciones
+        $total_mensual_confirmado = array_sum(array_column($confirmados, "monto_promedio"));
+        $total_mensual_probable = array_sum(array_column($probables, "monto_promedio"));
+        $total_anual_proyectado = $total_mensual_confirmado * 12;
+
+        // Calcular ahorro potencial (ejemplo: suma de los 3 más pequeños confirmados)
+        $montosConfirmados = array_column($confirmados, "monto_promedio");
+        sort($montosConfirmados);
+        $ahorro_potencial = array_sum(array_slice($montosConfirmados, 0, min(3, count($montosConfirmados)))) * 12;
 
         echo json_encode([
-            'success' => true,
-            'data' => [
-                'gastos_detectados' => $gastos_recurrentes,
-                'cantidad_detectada' => count($gastos_recurrentes),
-                'total_mensual_recurrente' => $total_mensual_recurrente
+            "success" => true,
+            "data" => [
+                "confirmados" => $confirmados,
+                "probables" => $probables,
+                "por_confirmar" => $porConfirmar,
+                "resumen" => [
+                    "total_mensual_confirmado" => $total_mensual_confirmado,
+                    "total_mensual_probable" => $total_mensual_probable,
+                    "total_anual_proyectado" => $total_anual_proyectado,
+                    "cantidad_confirmados" => count($confirmados),
+                    "cantidad_probables" => count($probables),
+                    "cantidad_por_confirmar" => count($porConfirmar),
+                    "ahorro_potencial" => $ahorro_potencial
+                ]
             ]
         ]);
 
     } catch (Exception $e) {
-        http_response_code(500 );
-        echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+        http_response_code(500);
+        echo json_encode([
+            "success" => false,
+            "message" => $e->getMessage()
+        ]);
     }
 }
-
-
 function sugerirCategoria($conn, $usuario_id, $input) {
     try {
         

@@ -6,7 +6,6 @@
     header("Location: index.php");
     exit;
 }
-
     $pagina_actual = 'reportes';
 
     require_once '../models/templates/header.php';
@@ -33,7 +32,7 @@
         Marcar todas como leídas
     </a>
 </div>
-<!-- ========= FIN: PANEL DESPLEGABLE DE NOTIFICACIONES ========= -->
+
 
 <div class="p-4 sm:ml-64">
     <div class="p-4 mt-14">
@@ -145,52 +144,141 @@
 
             <div class="grid grid-cols-1 gap-6">
                 <!-- ========= WIDGET DE GASTOS RECURRENTES (SUSCRIPCIONES) ========= -->
-                <div class="bg-white  rounded-2xl shadow-lg p-5 border border-gray-200">
+                <div class="bg-white rounded-2xl shadow-lg p-5 border border-gray-200">
 
-                    <!-- 1. Cabecera y Resumen Principal -->
-                    <div class="flex justify-between items-center">
+                    <!-- Header -->
+                    <div class="flex justify-between items-center mb-6">
                         <div>
-                            <h3 class="text-lg font-semibold text-gray-800">Suscripciones y Pagos
-                                Recurrentes</h3>
-                            <p class="text-sm text-gray-500">Gastos automáticos detectados en los
-                                últimos meses.</p>
+                            <h3 class="text-lg font-semibold text-gray-800">💳 Pagos Recurrentes Inteligentes</h3>
+                            <p class="text-sm text-gray-500">Sistema de detección automática con análisis de confianza
+                            </p>
                         </div>
-                        <!-- Loader que se muestra mientras se calculan los datos -->
                         <div id="recurrent-loader" class="text-sm text-gray-400">
                             Analizando...
                         </div>
                     </div>
 
-                    <!-- 2. Resumen de Totales (se muestra después de cargar) -->
-                    <div id="recurrent-summary"
-                        class="hidden mt-4 p-4 bg-indigo-50 rounded-xl flex items-center justify-around text-center">
-                        <div>
-                            <p class="text-2xl font-bold text-indigo-600" id="recurrent-count">
-                                0
-                            </p>
-                            <p class="text-sm font-medium text-gray-600">Pagos Detectados</p>
+                    <!-- Resumen con 4 tarjetas -->
+                    <div id="recurrent-summary" class="hidden grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                        <div class="bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl p-4 text-white">
+                            <div class="flex items-center gap-2 mb-1">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <span class="text-xs font-medium opacity-90">Total Mensual</span>
+                            </div>
+                            <p class="text-2xl font-bold" id="total-mensual">--</p>
+                            <p class="text-xs opacity-80 mt-1" id="cantidad-activos">--</p>
                         </div>
-                        <div>
-                            <p class="text-2xl font-bold text-indigo-60000" id="recurrent-total">
-                                --
-                            </p>
-                            <p class="text-sm font-medium text-gray-600">Total Mensual Estimado
-                            </p>
+
+                        <div class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-4 text-white">
+                            <div class="flex items-center gap-2 mb-1">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                                </svg>
+                                <span class="text-xs font-medium opacity-90">Proyección Anual</span>
+                            </div>
+                            <p class="text-2xl font-bold" id="total-anual">--</p>
+                            <p class="text-xs opacity-80 mt-1">Basado en confirmados</p>
+                        </div>
+
+                        <div class="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl p-4 text-white">
+                            <div class="flex items-center gap-2 mb-1">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                </svg>
+                                <span class="text-xs font-medium opacity-90">Ahorro Potencial</span>
+                            </div>
+                            <p class="text-2xl font-bold" id="ahorro-potencial">--</p>
+                            <p class="text-xs opacity-80 mt-1">Cancelando servicios</p>
+                        </div>
+
+                        <div class="bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl p-4 text-white">
+                            <div class="flex items-center gap-2 mb-1">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <span class="text-xs font-medium opacity-90">Por Confirmar</span>
+                            </div>
+                            <p class="text-2xl font-bold" id="cantidad-por-confirmar">--</p>
+                            <p class="text-xs opacity-80 mt-1">Requieren revisión</p>
                         </div>
                     </div>
 
-                    <!-- 3. Contenedor para la Lista Detallada de Gastos -->
-                    <div id="recurrent-list-container" class="mt-4 space-y-3">
-                        <!-- La lista de gastos recurrentes se cargará aquí con JS -->
+                    <!-- Tabs -->
+                    <div class="bg-gray-50 rounded-xl p-1 mb-6 hidden" id="tabs-container">
+                        <div class="flex gap-2">
+                            <button onclick="cambiarTab('confirmados')" id="tab-confirmados"
+                                class="flex-1 px-4 py-2.5 text-sm font-semibold rounded-lg transition-all">
+                                <span class="flex items-center justify-center gap-2">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    Confirmados <span id="count-confirmados" class="ml-1">(0)</span>
+                                </span>
+                            </button>
+                            <button onclick="cambiarTab('probables')" id="tab-probables"
+                                class="flex-1 px-4 py-2.5 text-sm font-semibold rounded-lg transition-all">
+                                <span class="flex items-center justify-center gap-2">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                    </svg>
+                                    Probables <span id="count-probables" class="ml-1">(0)</span>
+                                </span>
+                            </button>
+                            <button onclick="cambiarTab('por-confirmar')" id="tab-por-confirmar"
+                                class="flex-1 px-4 py-2.5 text-sm font-semibold rounded-lg transition-all">
+                                <span class="flex items-center justify-center gap-2">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    Por Confirmar <span id="count-por-confirmar" class="ml-1">(0)</span>
+                                </span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Contenido de tabs -->
+                    <div id="content-confirmados" class="space-y-3 hidden"></div>
+                    <div id="content-probables" class="space-y-3 hidden"></div>
+                    <div id="content-por-confirmar" class="space-y-3 hidden"></div>
+
+                    <!-- Info -->
+                    <div
+                        class="mt-6 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl p-4 border border-indigo-200">
+                        <div class="flex items-start gap-3">
+                            <div class="bg-indigo-100 rounded-full p-2">
+                                <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </div>
+                            <div class="flex-1">
+                                <h4 class="font-semibold text-gray-900 text-sm mb-1">¿Cómo funciona el sistema
+                                    inteligente?</h4>
+                                <ul class="text-xs text-gray-700 space-y-1">
+                                    <li><strong>Confirmados:</strong> 3+ meses detectados, alta confianza</li>
+                                    <li><strong>Probables:</strong> 2 meses detectados, requiere más tiempo</li>
+                                    <li><strong>Por Confirmar:</strong> Necesitamos tu ayuda para confirmar</li>
+                                </ul>
+                            </div>
+                        </div>
                     </div>
 
                 </div>
-                <!-- ========= FIN DEL WIDGET ========= -->
                 <!-- Recent Transactions -->
                 <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-4 md:p-6 border border-white/20">
                     <div
                         class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 space-y-2 sm:space-y-0">
-                        <h3 class="text-lg font-semibold text-gray-800">Transacciones recientes</h3>
+                        <h3 class="text-lg font-semibold text-gray-800">Transacciones realizadas</h3>
                         <button onclick="exportToExcel()"
                             class="flex items-center justify-center space-x-1 bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
                             <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -243,8 +331,6 @@
     </div>
 </div>
 
-
-
 <!-- Custom Date Modal -->
 <div id="customDateModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
     <div class="modal-content bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md">
@@ -278,8 +364,7 @@
         </div>
     </div>
 </div>
-<?php 
-    
-        require_once '../models/templates/footer.php';
-    ?>
+<?php     
+require_once '../models/templates/footer.php';
+?>
 <script src="../controllers/reportes.js"></script>

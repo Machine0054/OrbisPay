@@ -47,7 +47,7 @@
                 <div class="profile-section flex flex-col md:flex-row md:space-x-6 space-y-6 md:space-y-0">
                     <div class="profile-avatar flex flex-col items-center">
                         <div class="relative mb-4">
-                            <img src="../assets/img/avatars/1.png" alt="Avatar"
+                            <img src="../assets/icons/Avatar.webp" alt="Avatar"
                                 class="w-20 h-20 md:w-24 md:h-24 rounded-full ring-4 ring-white shadow-lg">
                             <button onclick="document.getElementById('avatarInput').click()"
                                 class="absolute bottom-0 right-0 bg-indigo-500 text-white p-2 rounded-full shadow-lg hover:bg-indigo-600 transition-colors">

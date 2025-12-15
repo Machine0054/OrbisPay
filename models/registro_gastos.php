@@ -3,7 +3,6 @@ session_start();
 ini_set('display_errors', 0);
 error_reporting(E_ALL);
 
-// Enviar los errores como JSON
 set_error_handler(function ($severity, $message, $file, $line) {
     header('Content-Type: application/json');
     http_response_code(500 ); // Es un error del servidor
@@ -40,12 +39,10 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-// --- INICIO DE LA MODIFICACIÓN ---
-// Leer el cuerpo de la petición JSON en lugar de usar $_POST
 $json_data = file_get_contents('php://input');
 $data = json_decode($json_data, true);
 
-// Si el JSON es inválido, $data será null
+
 if ($data === null) {
     http_response_code(400 );
     echo json_encode([
@@ -61,10 +58,8 @@ $amount        = filter_var($data['amount'] ?? null, FILTER_VALIDATE_FLOAT);
 $category      = trim(strip_tags($data['category'] ?? ''));
 $expense_date  = trim(strip_tags($data['date'] ?? ''));
 $usuario_id    = $_SESSION['id'];
-// --- FIN DE LA MODIFICACIÓN ---
 
 
-// Validar datos
 $errors = [];
 
 if (!$description || strlen($description) < 3) {
@@ -88,11 +83,6 @@ if (!$expense_date) {
     }
 }
 
-// Lista de categorías válidas
-// $valid_categories = ['alimentacion', 'transporte', 'servicios', 'entretenimiento', 'salud', 'otros'];
-// if (!in_array($category, $valid_categories)) {
-//     $errors[] = 'Categoría inválida';
-// }
 
 if (!empty($errors)) {
     http_response_code(400 );

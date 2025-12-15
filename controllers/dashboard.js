@@ -85,7 +85,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // --- Lógica para marcar como leídas ---
   async function markNotificationsAsRead() {
     // Ocultar el indicador inmediatamente para una mejor UX
     indicator.classList.add("hidden");
@@ -94,9 +93,6 @@ document.addEventListener("DOMContentLoaded", () => {
       await fetch("../models/api_notificaciones.php?action=marcar_leidas", {
         method: "POST",
       });
-      // Podríamos recargar las notificaciones, pero para evitar una llamada extra,
-      // simplemente podríamos quitar el fondo de "no leído" de los elementos con JS.
-      // Por ahora, la próxima vez que se carguen, ya vendrán como leídas.
     } catch (error) {
       console.error("Error al marcar notificaciones como leídas:", error);
     }
@@ -302,8 +298,9 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("gastosMes").textContent = formatCurrency(
       cards.gastosMes
     );
-    document.getElementById("balanceMes").textContent = formatCurrency(
-      cards.balanceMes
+
+    document.getElementById("saldoRestante").textContent = formatCurrency(
+      cards.saldoRestante
     );
 
     const pIngresos = document.getElementById("ingresosMesAnterior");
@@ -321,16 +318,19 @@ document.addEventListener("DOMContentLoaded", () => {
     pGastos.className = `text-xs sm:text-sm mt-1 ${
       cards.porcentajeGastos >= 0 ? "text-red-500" : "text-emerald-500"
     }`;
-
-    document.getElementById(
-      "porcentajeAhorro"
-    ).textContent = `${cards.porcentajeAhorro.toFixed(1)}% de ahorro`;
   }
 
   // Función para renderizar el gráfico de tendencia mensual
+  let monthlyChartInstance = null; // Variable global o accesible para almacenar la instancia del gráfico
+
   function renderMonthlyChart(chartData) {
+    // 1. Destruir la instancia anterior si existe
+    if (monthlyChartInstance) {
+      monthlyChartInstance.destroy();
+    }
+
     const ctx = document.getElementById("monthlyChart").getContext("2d");
-    new Chart(ctx, {
+    monthlyChartInstance = new Chart(ctx, {
       type: "line",
       data: {
         labels: chartData.labels,

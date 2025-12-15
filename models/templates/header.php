@@ -5,19 +5,36 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>OrbisPay</title>
+    <link rel="icon" type="image/x-icon" href="../favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="../favicon-32x32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="../apple-touch-icon.png">
+    <meta name="theme-color" content="#1D4ED8">
+
 
     <!-- Preload de Tailwind -->
     <link href="../assets/css/output.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.css" rel="stylesheet" type="text/css" />
-    <link href="https://cdn.jsdelivr.net/npm/flowbite@3.1.2/dist/flowbite.min.css" rel="stylesheet" />
-    <link href="https://cdn.jsdelivr.net/npm/litepicker@2.0.12/dist/css/litepicker.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link href="../assets/resources/Tagify/tagify.css" rel="stylesheet" type="text/css" />
+    <link href="../assets/resources/flowbite//flowbite.min.css" rel="stylesheet" />
+    <link href="../assets/resources/litepicker/litepicker.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+
     <!-- <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css" rel="stylesheet"> -->
-
-
     <!-- Estilos personalizados -->
-
     <style>
+    @keyframes ping-slow {
+
+        75%,
+        100% {
+            transform: scale(2);
+            opacity: 0;
+        }
+    }
+
+    .animate-ping-slow {
+        animation: ping-slow 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+    }
+
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
     * {
@@ -87,19 +104,33 @@
         padding-right: 2.5rem;
 
     }
+
+    /* Estilo para el día que el sistema calcula automáticamente */
+    .flatpickr-day.calculated-day {
+        background-color: #a7f3d0 !important;
+        /* Un verde suave (emerald-200) */
+        border-color: #10b981 !important;
+        color: #065f46 !important;
+        font-weight: bold;
+    }
+
+    /* Ajuste opcional para el día seleccionado manualmente */
+    .flatpickr-day.selected {
+        background-color: #4f46e5 !important;
+        /* Indigo-600 */
+        border-color: #4f46e5 !important;
+    }
     </style>
 </head>
 
 <body class="bg-gray-100 min-h-screen flex flex-col">
-
     <nav class="fixed top-0 z-50 w-full bg-white border-b border-gray-200 dark:bg-gray-800 dark:border-gray-700">
-
         <div class="px-3 py-3 lg:px-5 lg:pl-3">
             <div class="flex items-center justify-between">
                 <div class="flex items-center justify-start rtl:justify-end">
                     <button data-drawer-target="logo-sidebar" data-drawer-toggle="logo-sidebar"
                         aria-controls="logo-sidebar" type="button"
-                        class="inline-flex items-center p-2 text-sm text-gray-500 rounded-lg sm:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200">
+                        class="inline-flex items-center p-2 mt-2 ml-3 text-sm text-gray-500 rounded-lg hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200">
                         <span class="sr-only">Open sidebar</span>
                         <svg class="w-6 h-6" aria-hidden="true" fill="currentColor" viewBox="0 0 20 20"
                             xmlns="http://www.w3.org/2000/svg">
@@ -178,7 +209,7 @@
                                 class="flex text-sm bg-gray-800 rounded-full focus:ring-4 focus:ring-gray-300 dark:focus:ring-gray-600"
                                 aria-expanded="false" data-dropdown-toggle="dropdown-user">
                                 <span class="sr-only">ABRIR MENU DE USUARIO</span>
-                                <img class="w-8 h-8 rounded-full" src="../assets/img/avatars/1.png" alt="user photo">
+                                <img class="w-8 h-8 rounded-full" src="../assets/icons/avatar3.png" alt="user photo">
                             </button>
                         </div>
                         <div class="z-50 hidden my-4 text-base list-none bg-white divide-y divide-gray-100 rounded-sm shadow-sm dark:bg-gray-700 dark:divide-gray-600"

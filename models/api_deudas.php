@@ -10,9 +10,7 @@ if (!isset($_SESSION['id'])) { // Usamos 'ID' en mayúsculas para consistencia c
     echo json_encode(['success' => false, 'message' => 'Usuario no autenticado']);
     exit;
 }
-
-// --- CONEXIÓN A LA BASE DE DATOS ---
-require_once 'conexion.php'; // ¡Ajusta esta ruta si es necesario!
+require_once 'conexion.php';
 $conn = conectar();
 
 // --- ENRUTADOR DE ACCIONES (ROUTER) ---
@@ -33,6 +31,17 @@ switch ($action) {
         break;
     case 'obtener_historial_abonos':
         obtenerHistorialAbonos($conn, $usuario_id, $_GET); // Usamos $_GET porque es una petición de solo lectura
+        break;
+        case 'obtener_deuda_para_editar':
+        obtenerDeudaParaEditar($conn, $usuario_id, $_GET);
+        break;
+
+    case 'actualizar_deuda': 
+        actualizarDeuda($conn, $usuario_id, $input);
+        break;
+
+    case 'eliminar_deuda':
+        eliminarDeuda($conn, $usuario_id, $input);
         break;
     default:
         http_response_code(400 );
@@ -212,8 +221,6 @@ function registrarAbono($conn, $usuario_id, $input) {
             throw new Exception('Error al actualizar el saldo.');
         }
         $stmt_update->close();
-
-        // --- FINALIZAR LA TRANSACCIÓN ---
         // Si todo salió bien, confirmamos los cambios en la base de datos.
         $conn->commit();
 
@@ -281,6 +288,139 @@ function obtenerHistorialAbonos($conn, $usuario_id, $input) {
         ]);
 
     } catch (Exception $e) {
+        http_response_code(400 );
+        echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+    }
+}
+
+function obtenerDeudaParaEditar($conn, $usuario_id, $input) {
+    try {
+        $id_deuda = intval($input['id_deuda'] ?? 0);
+        if ($id_deuda <= 0) {
+            throw new Exception('ID de deuda no válido.');
+        }
+
+        $sql = "SELECT id_deuda, tipo, descripcion, acreedor_deudor, monto_inicial, fecha_creacion 
+                FROM T_DEUDAS_PRESTAMOS 
+                WHERE id_deuda = ? AND id_usuario = ?";
+        
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("ii", $id_deuda, $usuario_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $deuda = $result->fetch_assoc();
+        $stmt->close();
+
+        if (!$deuda) {
+            http_response_code(404 );
+            throw new Exception('Deuda no encontrada o no pertenece al usuario.');
+        }
+
+        // Aseguramos que los tipos de datos sean correctos para JS
+        $deuda['monto_inicial'] = floatval($deuda['monto_inicial']);
+
+        echo json_encode(['success' => true, 'data' => $deuda]);
+
+    } catch (Exception $e) {
+        http_response_code(400 );
+        echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+    }
+}
+
+function actualizarDeuda($conn, $usuario_id, $input) {
+    $conn->begin_transaction();
+    try {
+       
+        $id_deuda = intval($input['id_deuda'] ?? 0);
+        $tipo = trim($input['tipo'] ?? '');
+        $descripcion = trim($input['descripcion'] ?? '');
+        $acreedor_deudor = trim($input['acreedor_deudor'] ?? '');
+        $monto_inicial = floatval($input['monto_inicial'] ?? 0);
+        $fecha_creacion = trim($input['fecha_creacion'] ?? '');
+
+        if ($id_deuda <= 0) throw new Exception('ID de deuda no válido.');
+        if (!in_array($tipo, ['Deuda', 'Préstamo'])) throw new Exception('Tipo no válido.');
+        if (empty($descripcion) || strlen($descripcion) < 3) throw new Exception('La descripción es muy corta.');
+        if ($monto_inicial <= 0) throw new Exception('El monto debe ser mayor a cero.');
+        if (empty($fecha_creacion)) throw new Exception('La fecha es obligatoria.');
+
+        // No permitimos cambiar el monto inicial si ya hay abonos, para mantener la integridad.
+        $sql_check = "SELECT COUNT(*) as abonos_count FROM T_ABONOS_DEUDAS WHERE id_deuda = ?";
+        $stmt_check = $conn->prepare($sql_check);
+        $stmt_check->bind_param("i", $id_deuda);
+        $stmt_check->execute();
+        $abonos_count = $stmt_check->get_result()->fetch_assoc()['abonos_count'];
+        $stmt_check->close();
+
+        if ($abonos_count > 0) {
+            // Si ya hay abonos, solo actualizamos los campos que no afectan los cálculos.
+            $sql = "UPDATE T_DEUDAS_PRESTAMOS 
+                    SET tipo = ?, descripcion = ?, acreedor_deudor = ?, fecha_creacion = ?
+                    WHERE id_deuda = ? AND id_usuario = ?";
+            $stmt = $conn->prepare($sql);
+            $stmt->bind_param("ssssii", $tipo, $descripcion, $acreedor_deudor, $fecha_creacion, $id_deuda, $usuario_id);
+        } else {
+            // Si no hay abonos, podemos actualizar todo, incluido el monto y el saldo.
+            $sql = "UPDATE T_DEUDAS_PRESTAMOS 
+                    SET tipo = ?, descripcion = ?, acreedor_deudor = ?, monto_inicial = ?, saldo_actual = ?, fecha_creacion = ?
+                    WHERE id_deuda = ? AND id_usuario = ?";
+            $stmt = $conn->prepare($sql);
+            $stmt->bind_param("sssddsii", $tipo, $descripcion, $acreedor_deudor, $monto_inicial, $monto_inicial, $fecha_creacion, $id_deuda, $usuario_id);
+        }
+        
+        if ($stmt->execute()) {
+            if ($stmt->affected_rows > 0) {
+                $conn->commit();
+                echo json_encode(['success' => true, 'message' => 'Registro actualizado correctamente.']);
+            } else {
+                throw new Exception('No se realizaron cambios o el registro no pertenece al usuario.');
+            }
+        } else {
+            throw new Exception('Error al actualizar el registro.');
+        }
+        $stmt->close();
+
+    } catch (Exception $e) {
+        $conn->rollback();
+        http_response_code(400 );
+        echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+    }
+}
+
+function eliminarDeuda($conn, $usuario_id, $input) {
+    $conn->begin_transaction();
+    try {
+        $id_deuda = intval($input['id_deuda'] ?? 0);
+        if ($id_deuda <= 0) {
+            throw new Exception('ID de deuda no válido.');
+        }
+
+        // Primero, eliminamos los abonos asociados para mantener la integridad referencial.
+        $sql_delete_abonos = "DELETE FROM T_ABONOS_DEUDAS WHERE id_deuda = ?";
+        $stmt_abonos = $conn->prepare($sql_delete_abonos);
+        $stmt_abonos->bind_param("i", $id_deuda);
+        $stmt_abonos->execute();
+        $stmt_abonos->close();
+
+        // Luego, eliminamos la deuda principal, asegurándonos de que pertenece al usuario.
+        $sql_delete_deuda = "DELETE FROM T_DEUDAS_PRESTAMOS WHERE id_deuda = ? AND id_usuario = ?";
+        $stmt_deuda = $conn->prepare($sql_delete_deuda);
+        $stmt_deuda->bind_param("ii", $id_deuda, $usuario_id);
+        
+        if ($stmt_deuda->execute()) {
+            if ($stmt_deuda->affected_rows > 0) {
+                $conn->commit();
+                echo json_encode(['success' => true, 'message' => 'Registro eliminado permanentemente.']);
+            } else {
+                throw new Exception('La deuda no existe o no tienes permiso para eliminarla.');
+            }
+        } else {
+            throw new Exception('Error al eliminar la deuda principal.');
+        }
+        $stmt_deuda->close();
+
+    } catch (Exception $e) {
+        $conn->rollback();
         http_response_code(400 );
         echo json_encode(['success' => false, 'message' => $e->getMessage()]);
     }

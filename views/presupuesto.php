@@ -7,6 +7,7 @@
     exit;
 }
 
+
     $pagina_actual = 'presupuesto';
 
     require_once '../models/templates/header.php';
@@ -190,9 +191,9 @@
                         class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 space-y-2 sm:space-y-0">
                         <h3 class="text-lg font-semibold text-gray-800">Distribución del presupuesto</h3>
                         <div class="relative">
-                            <select id="budgetChartType"
+                            <select id="chart-type-selector"
                                 class="appearance-none bg-white border border-gray-300 rounded-lg pl-3 pr-8 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full sm:w-auto">
-                                <option value="doughnut">Gráfico de dona</option>
+                                <option value="donut" selected>Gráfico de dona</option>
                                 <option value="pie">Gráfico de torta</option>
                                 <option value="bar">Gráfico de barras</option>
                             </select>
@@ -208,6 +209,7 @@
                     <div class="relative h-64">
                         <canvas id="budgetChart"></canvas>
                     </div>
+                    <div id="budget-donut-chart"></div>
                 </div>
             </div>
         </main>
@@ -295,4 +297,5 @@
 <?php 
         require_once '../models/templates/footer.php';
     ?>
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 <script src="../controllers/presupuesto.js"></script>

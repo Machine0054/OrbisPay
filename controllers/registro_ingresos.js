@@ -414,46 +414,46 @@ class IncomeManager {
   createIncomeHTML(income) {
     const categoryInfo = this.getCategoryInfo(income.categoria);
     const timeAgo = this.getTimeAgo(income.fecha);
-
     return `
-            <div class="flex items-center justify-between p-4 bg-gradient-to-r from-${
-              categoryInfo.color
-            }-50 to-${categoryInfo.color}-100 rounded-xl border border-${
+        <div class="p-4 bg-${categoryInfo.color}-50 rounded-xl border border-${
       categoryInfo.color
     }-200 hover:shadow-md transition-shadow">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
                 <div class="flex items-center space-x-3">
-                    <div class="w-12 h-12 bg-${
+                    <div class="flex-shrink-0 w-12 h-12 bg-${
                       categoryInfo.color
                     }-500 rounded-full flex items-center justify-center shadow-lg">
                         <span class="text-white text-xl">${
                           categoryInfo.icon
                         }</span>
                     </div>
-                    <div>
-                        <p class="font-semibold text-gray-800">${this.escapeHtml(
+                    <div class="min-w-0">
+                        <p class="font-semibold text-gray-800 truncate">${this.escapeHtml(
                           income.concepto
                         )}</p>
                         <p class="text-sm text-gray-600">${timeAgo}</p>
                         ${
                           income.notas
-                            ? `<p class="text-xs text-gray-500 mt-1">${this.escapeHtml(
+                            ? `<p class="text-xs text-gray-500 mt-1 truncate">${this.escapeHtml(
                                 income.notas
                               )}</p>`
                             : ""
                         }
                     </div>
                 </div>
-                <div class="text-right">
-                    <p class="text-xl font-bold text-${
+                <div class="flex items-center justify-between mt-3 sm:mt-0 sm:flex-col sm:items-end">
+                    <p class="text-lg sm:text-xl font-bold text-${
                       categoryInfo.color
                     }-600">+$${this.formatNumber(income.monto)}</p>
                     <button onclick="incomeManager.deleteIncome(${income.id})" 
-                            class="text-red-500 hover:text-red-700 text-sm mt-1 transition-colors">
+                            class="text-red-500 hover:text-red-700 text-sm sm:mt-1 transition-colors">
                         🗑️ Eliminar
                     </button>
                 </div>
+
             </div>
-        `;
+        </div>
+    `;
   }
 
   // ==================== ELIMINACIÓN DE INGRESOS ====================

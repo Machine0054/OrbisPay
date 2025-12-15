@@ -35,12 +35,10 @@
 
 <div class="p-4 sm:ml-64">
     <div class="p-4 mt-14">
-
-        <!-- Encabezado de la sección -->
         <div class="flex justify-between items-center mb-6">
             <h2 class="text-2xl font-bold text-gray-800">Mis Categorías de Ingresos</h2>
-            <!-- Podríamos añadir un botón "Crear Categoría" aquí, pero ya lo tenemos en el formulario de ingresos, así que es opcional -->
         </div>
+
 
         <!-- Contenedor donde se cargará la lista de categorías -->
         <div id="category-list-container"
@@ -60,12 +58,11 @@
 
             <!-- La lista se insertará aquí -->
             <div id="category-list" class="space-y-4"></div>
-
         </div>
     </div>
 </div>
 
-<div id="delete-category-modal"
+<div id="delete-csategory-modal"
     class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 hidden">
     <div class="bg-white rounded-2xl p-8 max-w-lg w-full mx-4 shadow-2xl">
         <h3 class="text-xl font-bold text-gray-800">Eliminar Categoría "<span id="deleting-category-name"

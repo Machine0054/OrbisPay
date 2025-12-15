@@ -24,7 +24,6 @@ document.getElementById("amount").addEventListener("blur", function (e) {
   }
 });
 
-// --- INICIO DE LA NUEVA LÓGICA DE SUGERENCIA DE CATEGORÍA ---
 const descriptionInput = document.getElementById("description");
 let debounceTimeout;
 
@@ -37,19 +36,27 @@ descriptionInput.addEventListener("input", () => {
     }
   }, 500); // Espera 500ms después de que el usuario deja de escribir
 });
-// --- FIN DE LA NUEVA LÓGICA DE SUGERENCIA DE CATEGORÍA ---
 
 // =================================================================
-// --- NUEVO: SELECTORES PARA LA FUNCIONALIDAD DE "NUEVA CATEGORÍA" ---
+// --- SELECTORES---
 // =================================================================
-const categoryGrid = document.querySelector(".category-grid"); // Usamos la clase que ya tienes
+const budgetWarningModal = document.getElementById("budget-warning-modal");
+const budgetModalMessage = document.getElementById("budget-modal-message");
+const cancelBudgetWarningBtn = document.getElementById("cancel-budget-warning");
+const confirmBudgetWarningBtn = document.getElementById(
+  "confirm-budget-warning"
+);
+const categoryGrid = document.querySelector(".category-grid");
 const addNewCategoryBtn = document.getElementById("add-new-category-btn");
 const newCategoryModal = document.getElementById("newCategoryModal");
 const newCategoryForm = document.getElementById("newCategoryForm");
 const cancelNewCategoryBtn = document.getElementById("cancelNewCategoryBtn");
+const amountInput = document.getElementById("amount");
+const budgetHelper = document.getElementById("budget-status-helper");
+let currentBudget = null;
 
 // =================================================================
-// --- NUEVO: LÓGICA PARA CARGAR CATEGORÍAS (GLOBALES + USUARIO) ---
+// ---  LÓGICA PARA CARGAR CATEGORÍAS (GLOBALES + USUARIO) ---
 // =================================================================
 async function loadCategories() {
   try {
@@ -114,20 +121,20 @@ if (cancelNewCategoryBtn) {
   cancelNewCategoryBtn.addEventListener("click", hideNewCategoryModal);
 }
 
-// Lista de íconos que quieres ofrecer. ¡Puedes añadir más!
+// Lista de íconos.
 const availableIcons = [
-  { label: "Comida", path: "../assets/icons/alimentacion.svg" },
-  { label: "Transporte", path: "../assets/icons/transporte.svg" },
-  { label: "Servicios", path: "../assets/icons/servicios.svg" },
-  { label: "Entretenimiento", path: "../assets/icons/entretenimiento.svg" },
-  { label: "Salud", path: "../assets/icons/salud.svg" },
-  { label: "Compras", path: "../assets/icons/compras.svg" },
-  { label: "Hogar", path: "../assets/icons/hogar.svg" },
-  { label: "Educación", path: "../assets/icons/educacion.svg" },
-  { label: "Mascotas", path: "../assets/icons/mascotas.svg" },
-  { label: "Ropa", path: "../assets/icons/ropa.svg" },
-  { label: "Regalos", path: "../assets/icons/regalos.svg" },
-  { label: "Viajes", path: "../assets/icons/viajes.svg" },
+  { label: "Comida", path: "../assets/icons/food.png" },
+  { label: "Transporte", path: "../assets/icons/motorcycle.webp" },
+  { label: "Servicios", path: "../assets/icons/servicios.webp" },
+  { label: "Entretenimiento", path: "../assets/icons/entretenimiento.png" },
+  { label: "Salud", path: "../assets/icons/salud.webp" },
+  { label: "Compras", path: "../assets/icons/compras.webp" },
+  { label: "Hogar", path: "../assets/icons/hogar.webp" },
+  { label: "Educación", path: "../assets/icons/educacion.webp" },
+  { label: "Mascotas", path: "../assets/icons/mascotas.png" },
+  { label: "Ropa", path: "../assets/icons/ropa.webp" },
+  { label: "Regalos", path: "../assets/icons/regalos.png" },
+  { label: "Viajes", path: "../assets/icons/viajes.png" },
 ];
 
 const iconSelector = document.getElementById("icon-selector");
@@ -275,17 +282,40 @@ if (addNewCategoryBtn) {
     document.getElementById("newCategoryName").focus();
   });
 }
-function selectCategory(element) {
+async function selectCategory(element) {
   const categoryName = element.dataset.categoryName;
+  const categoryId = element.dataset.categoryId;
 
+  // Reseteo visual y de datos
   document.querySelectorAll(".category-card").forEach((card) => {
     card.classList.remove("selected", "border-red-500");
     card.classList.add("border-gray-200");
   });
+  budgetHelper.innerHTML = "";
+  currentBudget = null;
+
   element.classList.add("selected", "border-red-500");
   element.classList.remove("border-gray-200");
 
+  // Guardar en el input oculto
   document.getElementById("category").value = categoryName;
+
+  if (!categoryId) return;
+
+  try {
+    // Usamos la ruta correcta a tu API de presupuesto
+    const response = await fetch(
+      `../models/presupuesto.php?action=check_budget&category_id=${categoryId}`
+    );
+    const result = await response.json();
+
+    if (result.success && result.data.budgeted) {
+      currentBudget = result.data; // Guardamos los datos del presupuesto
+      updateBudgetHelper(); // Mostramos el estado inicial
+    }
+  } catch (error) {
+    console.error("Error al verificar el presupuesto:", error);
+  }
 }
 
 function clearForm() {
@@ -293,32 +323,32 @@ function clearForm() {
   document.getElementById("description").value = "";
   document.getElementById("date").valueAsDate = new Date();
   document.getElementById("category").value = "";
-  selectedCategory = null;
+
   document.querySelectorAll(".category-card").forEach((card) => {
     card.classList.remove("selected", "border-red-500");
     card.classList.add("border-gray-200");
   });
+  if (budgetHelper) {
+    budgetHelper.innerHTML = ""; // Limpia el mensaje de texto
+  }
+  currentBudget = null; // Resetea la memoria del asistente
+  amountInput.classList.remove("border-red-500", "ring-2", "ring-red-200"); // Quita el borde rojo del monto
 }
 
 async function handleSubmit(event) {
-  // 1. Prevenir el envío tradicional del formulario
   event.preventDefault();
 
-  // 2. Obtener los elementos del DOM
+  // 2. Recolectar y validar los datos (esta parte ya la tienes y está bien)
   const amountInput = document.getElementById("amount");
   const descriptionInput = document.getElementById("description");
   const dateInput = document.getElementById("date");
   const categoryInput = document.getElementById("category");
-
-  // 3. Recolectar y limpiar los datos del formulario
-  // Elimina los puntos de miles (ej: "1.500" -> "1500") para convertirlo a número
   const amountValue = amountInput.value.replace(/\./g, "");
   const amount = parseFloat(amountValue);
   const description = descriptionInput.value.trim();
   const date = dateInput.value;
-  const category = categoryInput.value; // El valor se asigna en la función selectCategory
+  const category = categoryInput.value;
 
-  // 4. Validaciones del lado del cliente (rápidas y previenen peticiones innecesarias)
   if (!description || description.length < 3) {
     showErrorMessage(
       "La descripción debe tener al menos 3 caracteres.",
@@ -335,23 +365,41 @@ async function handleSubmit(event) {
     return;
   }
   if (!category) {
-    // Como no hay un input visible para la categoría, mostramos un error general
     showErrorMessage("Por favor, selecciona una categoría.");
-    // Opcional: podrías resaltar el contenedor de las categorías
-    document
-      .querySelector(".category-grid")
-      .classList.add("ring-2", "ring-red-500");
-    setTimeout(
-      () =>
-        document
-          .querySelector(".category-grid")
-          .classList.remove("ring-2", "ring-red-500"),
-      3000
-    );
     return;
   }
 
-  // 5. Crear el objeto de datos que se enviará como JSON
+  const isOverBudget = currentBudget && amount > currentBudget.remaining;
+
+  if (isOverBudget) {
+    // Si se supera el presupuesto, mostramos el modal en lugar de enviar
+    const overage = amount - currentBudget.remaining;
+    const categoryName =
+      document.querySelector(".category-card.selected")?.dataset.categoryName ||
+      "esta categoría";
+
+    budgetModalMessage.innerHTML = `Con este gasto superarás tu presupuesto para <strong>${categoryName}</strong> en <strong>${formatCurrency(
+      overage
+    )}</strong>.   
+  
+¿Estás seguro de que quieres continuar?`;
+
+    showBudgetWarningModal();
+  } else {
+    // Si no se supera, procedemos a registrar el gasto directamente
+    await proceedWithRegistration();
+  }
+}
+
+async function proceedWithRegistration() {
+  // Recolectamos los datos de nuevo (o podríamos pasarlos como parámetros)
+  const amount = parseFloat(
+    document.getElementById("amount").value.replace(/\./g, "")
+  );
+  const description = document.getElementById("description").value.trim();
+  const date = document.getElementById("date").value;
+  const category = document.getElementById("category").value;
+
   const data = {
     description: description,
     amount: amount,
@@ -359,41 +407,35 @@ async function handleSubmit(event) {
     date: date,
   };
 
-  // 6. Realizar la petición al servidor con 'fetch'
   try {
     const response = await fetch("../models/registro_gastos.php", {
-      // Asegúrate de que la ruta sea correcta
       method: "POST",
       headers: {
-        "Content-Type": "application/json", // Indicar que estamos enviando JSON
-        Accept: "application/json", // Indicar que esperamos una respuesta JSON
+        "Content-Type": "application/json",
+        Accept: "application/json",
       },
-      body: JSON.stringify(data), // Convertir el objeto JS a una cadena JSON
+      body: JSON.stringify(data),
     });
 
-    // Decodificar la respuesta JSON del servidor
     const result = await response.json();
 
-    // 7. Manejar la respuesta del servidor
     if (response.ok && result.success) {
-      // Éxito: El gasto se registró
       showSuccessMessage("¡Gasto registrado exitosamente!");
-      clearForm(); // Limpiar el formulario
-
-      // Si tienes una función para recargar la lista de gastos, llámala aquí
+      clearForm();
       if (typeof loadExpenses === "function") {
         loadExpenses();
       }
     } else {
-      // Error: El servidor respondió con un error (de validación, de base de datos, etc.)
       throw new Error(
         result.message || "Ocurrió un error desconocido en el servidor."
       );
     }
   } catch (error) {
-    // Error de red o al procesar la petición/respuesta
-    console.error("Error en handleSubmit:", error);
+    console.error("Error en proceedWithRegistration:", error);
     showErrorMessage(error.message);
+  } finally {
+    // Nos aseguramos de que el modal se oculte si estaba abierto
+    hideBudgetWarningModal();
   }
 }
 
@@ -509,16 +551,18 @@ async function loadExpenses() {
 }
 
 function updateRecentExpenses(expenses) {
-  if (!Array.isArray(expenses)) {
-    console.warn(
-      "No se recibió un arreglo válido de gastos recientes",
-      expenses
-    );
+  const recentExpensesContainer = document.getElementById("recentExpenses");
+  recentExpensesContainer.innerHTML = "";
+  if (!Array.isArray(expenses) || expenses.length === 0) {
+    recentExpensesContainer.innerHTML = `
+      <div class="text-center py-16 text-gray-500">
+        No hay gastos recientes para mostrar.
+      </div>
+    `;
+    recentExpensesContainer.style.height = "auto";
     return;
   }
-
-  const recentExpensesContainer = document.getElementById("recentExpenses");
-  recentExpensesContainer.innerHTML = ""; // Limpiamos el contenedor
+  recentExpensesContainer.style.height = "";
 
   expenses.forEach((expense) => {
     const date = new Date(expense.fecha_gasto);
@@ -527,10 +571,8 @@ function updateRecentExpenses(expenses) {
     const dateText =
       diffDays === 0 ? "Hoy" : diffDays === 1 ? "Ayer" : `${diffDays} días`;
 
-    const iconPath = expense.categoria_icono || "assets/icons/default.svg"; // Ícono por defecto
+    const iconPath = expense.categoria_icono || "assets/icons/default.svg";
     const iconHTML = `<img src="${iconPath}" alt="${expense.categoria_nombre}" class="w-6 h-6">`;
-
-    // Usamos directamente el nombre de la categoría que nos envía el PHP
     const categoryName = expense.categoria_nombre || "Sin Categoría";
 
     const newExpense = document.createElement("div");
@@ -538,21 +580,19 @@ function updateRecentExpenses(expenses) {
       "flex items-center justify-between p-4 bg-red-50 rounded-xl transform scale-95 opacity-0 transition-all duration-300";
 
     newExpense.innerHTML = `
-            <div class="flex items-center space-x-3">
-                <div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
-                    ${iconHTML}
-                </div>
-                <div>
-                    <p class="font-medium text-gray-800">${
-                      expense.descripcion
-                    }</p>
-                    <p class="text-sm text-gray-600">${dateText} - ${categoryName}</p>
-                </div>
-            </div>
-            <p class="font-semibold text-red-600">-${parseFloat(
-              expense.monto
-            ).toLocaleString("es-CO")}</p>
-        `;
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+          ${iconHTML}
+        </div>
+        <div>
+          <p class="font-medium text-gray-800">${expense.descripcion}</p>
+          <p class="text-sm text-gray-600">${dateText} - ${categoryName}</p>
+        </div>
+      </div>
+      <p class="font-semibold text-red-600">-${parseFloat(
+        expense.monto
+      ).toLocaleString("es-CO")}</p>
+    `;
 
     recentExpensesContainer.appendChild(newExpense);
     setTimeout(() => {
@@ -632,6 +672,78 @@ function quickExpense(category, amount) {
   document.getElementById("category").value = category;
   document.querySelector("form").scrollIntoView({ behavior: "smooth" });
 }
+
+function handleAmountChange() {
+  if (!currentBudget) {
+    return; // Si no hay presupuesto para esta categoría, no hacemos nada
+  }
+  updateBudgetHelper(); // Llama a la función para que recalcule y muestre el estado
+}
+function updateBudgetHelper() {
+  if (!currentBudget) {
+    budgetHelper.innerHTML = "";
+    amountInput.classList.remove("border-red-500", "ring-2", "ring-red-200");
+    return;
+  }
+
+  const amount = parseFloat(amountInput.value.replace(/\./g, "")) || 0;
+  const remainingAfterExpense = currentBudget.remaining - amount;
+
+  if (amount > currentBudget.remaining) {
+    // El usuario se está pasando del presupuesto
+    const overage = amount - currentBudget.remaining;
+    budgetHelper.innerHTML = `
+            <span class="text-red-600 font-semibold">
+                ¡Ojo! Superarás el presupuesto en ${formatCurrency(overage)}.
+            </span>
+        `;
+    amountInput.classList.add("border-red-500", "ring-2", "ring-red-200");
+  } else {
+    // El usuario todavía tiene presupuesto
+    budgetHelper.innerHTML = `
+            <span class="text-green-600">
+                Te quedarían ${formatCurrency(
+                  remainingAfterExpense
+                )} de este presupuesto.
+            </span>
+        `;
+    amountInput.classList.remove("border-red-500", "ring-2", "ring-red-200");
+  }
+}
+
+function showBudgetWarningModal() {
+  budgetWarningModal.classList.remove("hidden");
+  setTimeout(
+    () =>
+      budgetWarningModal
+        .querySelector(".transform")
+        .classList.remove("scale-95"),
+    10
+  );
+}
+
+function hideBudgetWarningModal() {
+  budgetWarningModal.querySelector(".transform").classList.add("scale-95");
+  setTimeout(() => budgetWarningModal.classList.add("hidden"), 300);
+}
+
+cancelBudgetWarningBtn.addEventListener("click", hideBudgetWarningModal);
+
+confirmBudgetWarningBtn.addEventListener("click", async () => {
+  // Si el usuario confirma, llamamos a la función que realmente registra el gasto
+  await proceedWithRegistration();
+});
+
+const formatCurrency = (value) => {
+  return new Intl.NumberFormat("es-CO", {
+    style: "currency",
+    currency: "COP",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(value);
+};
+
+amountInput.addEventListener("input", handleAmountChange);
 
 // Cargar gastos al iniciar
 $(document).ready(function () {

@@ -1,9 +1,3 @@
-/**
- * presupuesto.js
- * Lógica completa para la página de gestión de presupuestos.
- * Versión: ES6+ sin jQuery, carga dinámica de categorías.
- */
-
 document.addEventListener("DOMContentLoaded", () => {
   // --- SELECTORES DEL DOM ---
   // Se definen aquí para fácil acceso y mantenimiento.
@@ -23,10 +17,10 @@ document.addEventListener("DOMContentLoaded", () => {
   const newBudgetAmountInput = document.getElementById("newBudgetAmount");
   const newBudgetPeriodSelect = document.getElementById("newBudgetPeriod");
   const newBudgetStartDateInput = document.getElementById("newBudgetStartDate");
-
+  let budgetChart = null;
+  let budgetData = [];
   // --- INICIALIZACIÓN PRINCIPAL ---
-  // 1. Carga la estructura de la UI (tarjetas y opciones del select) desde la BD.
-  // 2. Una vez completado, carga los datos numéricos de los presupuestos.
+
   initializePage();
 
   // --- EVENT LISTENERS ---
@@ -102,8 +96,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const result = await response.json();
       if (!result.success) throw new Error(result.message);
+      budgetData = result.data;
 
-      renderBudgetData(result.data);
+      renderBudgetData(budgetData);
+      renderBudgetChart(budgetData);
     } catch (error) {
       console.error("Error al cargar presupuestos:", error);
       showNotification(
@@ -206,9 +202,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Agrega los datos de los presupuestos cargados
     budgets.forEach((budget) => {
-      if (categoryData[budget.category]) {
-        categoryData[budget.category].budgeted += parseFloat(budget.amount);
-        categoryData[budget.category].used += parseFloat(
+      // El backend ahora devuelve 'id_categoria', no 'category'
+      if (categoryData[budget.id_categoria]) {
+        categoryData[budget.id_categoria].budgeted += parseFloat(budget.amount);
+        categoryData[budget.id_categoria].used += parseFloat(
           budget.total_expenses || 0
         );
       }
@@ -339,7 +336,11 @@ document.addEventListener("DOMContentLoaded", () => {
             }">
                 <div class="budget-category-header flex justify-between items-center mb-1">
                     <span class="font-medium text-gray-800 flex items-center space-x-2">
-                        <span class="w-5 h-5">${category.icono || "📦"}</span>
+                        ${
+                          category.icono
+                            ? `<img src="${category.icono}" alt="Icono" class="w-5 h-5">`
+                            : '<span class="w-5 h-5">📦</span>'
+                        }
                         <span>${category.nombre_categoria}</span>
                     </span>
                     <div class="budget-category-stats flex items-center space-x-2">
@@ -406,6 +407,110 @@ document.addEventListener("DOMContentLoaded", () => {
   function formatCurrencyInput(e) {
     let value = e.target.value.replace(/\D/g, "");
     e.target.value = value ? parseInt(value).toLocaleString("es-CO") : "";
+  }
+
+  function renderBudgetChart(data, type = "donut") {
+    const chartContainer = document.querySelector("#budget-donut-chart");
+    if (!chartContainer) return;
+
+    if (!data || data.length === 0) {
+      chartContainer.innerHTML =
+        '<div class="text-center text-gray-500 py-8">No hay presupuestos para mostrar.</div>';
+      return;
+    }
+    const labels = data.map((b) => b.nombre_categoria);
+    const seriesData = data.map((b) => parseFloat(b.amount));
+    let options = {
+      chart: {
+        type: type,
+        height: 350,
+        fontFamily: "inherit",
+        toolbar: { show: false },
+      },
+      colors: [
+        "#4F46E5",
+        "#F59E0B",
+        "#10B981",
+        "#EF4444",
+        "#8B5CF6",
+        "#3B82F6",
+      ],
+      tooltip: {
+        y: {
+          formatter: function (val) {
+            return new Intl.NumberFormat("es-CO", {
+              style: "currency",
+              currency: "COP",
+              minimumFractionDigits: 0,
+            }).format(val);
+          },
+        },
+      },
+    };
+
+    if (type === "donut" || type === "pie") {
+      options.series = seriesData;
+      options.labels = labels;
+      options.plotOptions = {
+        pie: {
+          donut: {
+            size: type === "donut" ? "65%" : "0%",
+            labels: {
+              show: true,
+            },
+          },
+        },
+      };
+      options.legend = { position: "bottom" };
+    } else if (type === "bar") {
+      options.series = [
+        {
+          name: "Presupuesto",
+          data: seriesData,
+        },
+      ];
+      options.xaxis = {
+        categories: labels,
+        labels: {
+          style: {
+            fontSize: "12px",
+          },
+        },
+      };
+      options.yaxis = {
+        labels: {
+          formatter: function (val) {
+            return `${val / 1000}K`;
+          },
+        },
+      };
+      options.plotOptions = {
+        bar: {
+          horizontal: false,
+          columnWidth: "55%",
+          distributed: true,
+          borderRadius: 4,
+        },
+      };
+      options.legend = { show: false };
+      options.dataLabels = { enabled: false };
+    }
+
+    if (!budgetChart) {
+      chartContainer.innerHTML = "";
+      budgetChart = new ApexCharts(chartContainer, options);
+      budgetChart.render();
+    } else {
+      budgetChart.updateOptions(options);
+    }
+  }
+
+  const chartSelector = document.getElementById("chart-type-selector");
+  if (chartSelector) {
+    chartSelector.addEventListener("change", (event) => {
+      const newChartType = event.target.value;
+      renderBudgetChart(budgetData, newChartType);
+    });
   }
 
   /**

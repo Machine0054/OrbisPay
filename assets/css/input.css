@@ -1,3 +1,157 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Mejoras para el modal en móviles */
+@media (max-width: 640px) {
+  #newGoalModal .modal-content {
+    margin: 1rem;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  /* Ajuste del padding del modal */
+  #newGoalModal .modal-content {
+    padding: 1.25rem;
+  }
+
+  /* Mejora los inputs en móvil */
+  #newGoalModal input,
+  #newGoalModal select {
+    font-size: 16px; /* Previene zoom en iOS */
+  }
+
+  /* Grid de 2 columnas más compacto en móvil */
+  #newGoalModal .grid-cols-2 {
+    gap: 0.75rem;
+  }
+
+  /* Botones del modal en móvil */
+  #newGoalModal .flex.space-x-3 {
+    flex-direction: column;
+    space-x: 0;
+    gap: 0.5rem;
+  }
+
+  #newGoalModal .flex.space-x-3 button {
+    width: 100%;
+  }
+}
+
+/* Mejora para el estado vacío */
+.empty-state {
+  text-align: center;
+  padding: 2rem 1rem;
+}
+
+.empty-state img {
+  max-width: 200px;
+  margin: 0 auto;
+}
+
+/* Asegurar que el sidebar no tape contenido en móvil */
+@media (max-width: 640px) {
+  .p-4.sm\:ml-64 {
+    margin-left: 0 !important;
+  }
+}
+
+/* Botón flotante solo en móvil */
+@media (max-width: 640px) {
+  #openNewGoalModalBtn {
+    position: fixed;
+    bottom: 1.5rem;
+    right: 1.5rem;
+    z-index: 40;
+    width: auto;
+    border-radius: 9999px;
+    padding: 1rem;
+    box-shadow: 0 10px 25px -5px rgba(79, 70, 229, 0.3);
+  }
+
+  #openNewGoalModalBtn span {
+    display: none; /* Oculta el texto */
+  }
+
+  #openNewGoalModalBtn svg {
+    margin: 0; /* Centra el icono */
+  }
+}
+
+/*Codigo Gestionar categorias*/
+/* Animaciones del modal */
+#categoryModal.show .bg-white,
+#iconGalleryModal.show .bg-white {
+  animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Tarjetas de categoría mejoradas */
+.category-card {
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.category-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px -10px rgba(16, 185, 129, 0.3);
+}
+
+.category-card:hover .category-actions {
+  opacity: 1;
+}
+
+.category-actions {
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .category-actions {
+    opacity: 1;
+  }
+
+  #categoryModal .bg-white,
+  #iconGalleryModal .bg-white {
+    max-height: 95vh;
+  }
+}
+
+/* Preview de ícono con efecto */
+#iconPreview img {
+  object-fit: contain;
+  transition: transform 0.2s ease;
+}
+
+#iconPreview:hover img {
+  transform: scale(1.05);
+}
+
+/* Íconos de galería */
+.gallery-icon {
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.gallery-icon:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.gallery-icon.selected {
+  border-color: #10b981 !important;
+  background-color: #d1fae5;
+}
+
+/*Fin codigo Gestionar categorias*/

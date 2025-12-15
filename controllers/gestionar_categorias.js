@@ -175,6 +175,7 @@ document.addEventListener("DOMContentLoaded", function () {
       categoryListContainer.innerHTML = `<div class="text-center py-10"><p class="text-gray-500">Aún no has creado ninguna categoría de ingreso.</p></div>`;
       return;
     }
+
     categoryListContainer.innerHTML = categories
       .map(
         (category) => `

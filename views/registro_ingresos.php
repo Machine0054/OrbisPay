@@ -29,9 +29,6 @@ if (!isset($_SESSION['usuario'])) { echo "No existe usuario logueado, por favor 
         Marcar todas como leídas
     </a>
 </div>
-<!-- ========= FIN: PANEL DESPLEGABLE DE NOTIFICACIONES ========= -->
-
-
 <div class="p-4 sm:ml-64">
     <div class="p-4 mt-14">
         <!-- Main Content -->
@@ -58,6 +55,7 @@ if (!isset($_SESSION['usuario'])) { echo "No existe usuario logueado, por favor 
                             </div>
                         </div>
                     </div>
+
                     <div
                         class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-6 card-hover border border-white/20">
                         <div class="flex items-center justify-between">
@@ -97,11 +95,8 @@ if (!isset($_SESSION['usuario'])) { echo "No existe usuario logueado, por favor 
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-8 border border-white/20">
                         <h3 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
-                            <svg class="w-8 h-8 text-emerald-600 mr-3" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd"
-                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z"
-                                    clip-rule="evenodd" />
-                            </svg>
+                            <img src="../assets/icons/plus-circle.png" alt="Plus-circle"
+                                class="w-10 h-10 object-contain">
                             Nuevo Ingreso
                         </h3>
                         <form id="income-form" class="space-y-6">
@@ -153,9 +148,9 @@ if (!isset($_SESSION['usuario'])) { echo "No existe usuario logueado, por favor 
                                     class="form-input w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white/50"
                                     placeholder="Información adicional..."></textarea>
                             </div>
-                            <div class="flex space-x-4">
+                            <div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4">
                                 <button type="button" id="btnGuardarIngreso"
-                                    class="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-medium py-3 px-6 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg flex items-center justify-center">
+                                    class="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-medium py-3 px-6 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg flex items-center justify-center">
                                     <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
                                         <path fill-rule="evenodd"
                                             d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.236 4.53L8.077 10.5a.75.75 0 00-1.06 1.06l2.47 2.47a.75.75 0 001.137-.089l3.857-5.401z"
@@ -164,7 +159,7 @@ if (!isset($_SESSION['usuario'])) { echo "No existe usuario logueado, por favor 
                                     Registrar Ingreso
                                 </button>
                                 <button type="reset"
-                                    class="bg-gray-500 hover:bg-gray-600 text-white font-medium py-3 px-6 rounded-xl transition-all duration-300 hover:scale-105 flex items-center justify-center">
+                                    class="w-full bg-gray-500 hover:bg-gray-600 text-white font-medium py-3 px-6 rounded-xl transition-all duration-300 hover:scale-105 flex items-center justify-center">
                                     <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
                                         <path fill-rule="evenodd"
                                             d="M15.312 11.424a5.5 5.5 0 01-9.201 2.466l-.312-.311h2.433a.75.75 0 000-1.5H3.989a.75.75 0 00-.75.75v4.242a.75.75 0 001.5 0v-2.43l.31.31a7 7 0 0011.712-3.138.75.75 0 00-1.449-.39zm-3.068-9.307a7 7 0 00-11.712 3.139.75.75 0 001.449.39 5.5 5.5 0 019.201-2.466l.312.311H8.061a.75.75 0 000 1.5h4.243a.75.75 0 00.75-.75V2.999a.75.75 0 00-1.5 0v2.43l-.31-.31z"
@@ -172,6 +167,7 @@ if (!isset($_SESSION['usuario'])) { echo "No existe usuario logueado, por favor 
                                     </svg>
                                     Limpiar
                                 </button>
+
                             </div>
                         </form>
                     </div>
@@ -287,4 +283,5 @@ MODAL DE CONFIRMACIÓN REUTILIZABLE (ESTILO CENTRADO)
     require_once '../models/templates/footer.php';
   
 ?>
+<script src="../controllers/responsive.js"></script>
 <script src="../controllers/registro_ingresos.js"></script>

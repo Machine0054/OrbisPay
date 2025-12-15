@@ -15,7 +15,7 @@
 ?>
 
 <!-- ========= INICIO: PANEL DESPLEGABLE DE NOTIFICACIONES ========= -->
-<!-- <div id="notification-panel"
+<div id="notification-panel"
     class="fixed top-16 right-5 z-50 my-4 w-full max-w-sm text-base list-none bg-white rounded-xl divide-y divide-gray-100 shadow-lg hidden"
     aria-labelledby="notification-bell-btn">
     <div class="block px-4 py-2 text-base font-medium text-center text-gray-700 bg-gray-50 rounded-t-xl">
@@ -27,8 +27,8 @@
         class="block py-2 text-sm font-medium text-center text-gray-900 rounded-b-xl bg-gray-50">
         Marcar todas como leídas
     </a>
-</div> -->
-<!-- ========= FIN: PANEL DESPLEGABLE DE NOTIFICACIONES ========= -->
+</div>
+
 
 <div class="p-4 sm:ml-64">
     <div class="p-4 mt-14">
@@ -54,6 +54,7 @@
                         </div>
                     </div>
                 </div>
+
 
                 <div
                     class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-4 md:p-6 card-hover border border-white/20">
@@ -107,12 +108,9 @@
                 <div
                     class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-4 md:p-6 border border-white/20 form-animation">
                     <div class="flex items-center mb-6">
-                        <div class="bg-red-100 p-2 md:p-3 rounded-full mr-4">
-                            <svg class="w-5 h-5 md:w-6 md:h-6 text-red-600" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd"
-                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM7 9a1 1 0 000 2h6a1 1 0 100-2H7z"
-                                    clip-rule="evenodd" />
-                            </svg>
+                        <div class="">
+                            <img src="../assets/icons/minus.circle.png" class="w-10 h-10 object-contain"
+                                alt="Minus-Circle">
                         </div>
                         <h3 class="text-lg md:text-xl font-semibold text-gray-800">Nuevo Gasto</h3>
                     </div>
@@ -137,7 +135,7 @@
                                 class="w-full px-4 py-3 border border-gray-300 rounded-xl input-focus bg-white/50"
                                 placeholder="Descripción del gasto" required>
                         </div>
-                        <!-- Date -->
+
                         <div>
                             <label for="date" class="block text-sm font-medium text-gray-700 mb-2">Fecha</label>
                             <input type="date" id="date" name="date"
@@ -147,15 +145,11 @@
                         <!-- Category Selection -->
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-4">Categoría</label>
-
-                            <!-- ================================================== -->
-                            <!--           ESTE ES EL CONTENEDOR DINÁMICO           -->
-                            <!-- ================================================== -->
+                            <div id="budget-status-helper" class="mb-2 text-sm h-5">
+                                <!-- El mensaje se insertará aquí con JavaScript -->
+                            </div>
                             <div class="category-grid grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-3">
 
-                                <!-- Las categorías se cargarán aquí desde JavaScript -->
-
-                                <!-- BOTÓN "Nueva Categoría" (se queda aquí) -->
                                 <button type="button" id="add-new-category-btn"
                                     class="flex flex-col items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-lg text-gray-500 hover:bg-gray-100 hover:border-indigo-400 hover:text-indigo-600 transition-all duration-200">
                                     <svg class="w-8 h-8 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -204,9 +198,7 @@
                         </a>
                     </div>
                     <!-- Contenedor de la lista con altura máxima y scroll -->
-                    <div class="space-y-4 overflow-y-auto pr-2" style="max-height: 700px;" id="recentExpenses">
-                        <!-- El contenido se inserta aquí -->
-                        <!-- Placeholder de carga -->
+                    <div class="space-y-4 overflow-y-auto pr-2 min-h-[200px] max-h-[700px]" id="recentExpenses">
                         <div class="text-center py-16 text-gray-500">Cargando gastos...</div>
                     </div>
                 </div>
@@ -261,15 +253,17 @@
 </div>
 
 <!-- ================================================== -->
-<!--      NUEVO: Modal para Crear la Categoría        -->
+<!--  Modal para Crear la Categoría  -->
 <!-- ================================================== -->
 <div id="newCategoryModal"
     class="fixed inset-0 bg-gray-900 bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-50 hidden">
     <div
         class="bg-white rounded-2xl shadow-xl p-6 md:p-8 w-full max-w-lg m-4 transform transition-all duration-300 scale-95">
 
-        <h2 class="text-2xl font-bold text-gray-800 mb-6">Añadir Nueva Categoría</h2>
-
+        <div class="flex items-center gap-3 mb-6">
+            <!-- <img src="../assets/icons/category.png" alt="Add-Category" class="w-8 h-8 object-contain"> -->
+            <h2 class="text-2xl font-bold text-gray-800">Añadir Nueva Categoría</h2>
+        </div>
         <form id="newCategoryForm" class="space-y-6">
             <!-- Nombre de la Categoría -->
             <div>
@@ -305,8 +299,43 @@
         </form>
     </div>
 </div>
+
+<div id="budget-warning-modal"
+    class="fixed inset-0 bg-gray-900 bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-50 hidden">
+    <div
+        class="bg-white rounded-2xl shadow-xl p-6 md:p-8 w-full max-w-md m-4 transform transition-all duration-300 scale-95">
+
+        <!-- Contenido Principal del Modal -->
+        <div class="text-center">
+            <!-- Icono de Alerta -->
+            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-yellow-100 mb-4">
+                <img src="../assets/icons/warning.svg" alt="warning" class="h-7 w-7 text-yellow-600">
+            </div>
+
+            <!-- Título -->
+            <h2 class="text-xl font-bold text-gray-900">¡Atención!</h2>
+
+            <!-- Mensaje Dinámico -->
+            <p id="budget-modal-message" class="mt-2 text-sm text-gray-600">
+                <!-- El mensaje del JS irá aquí -->
+            </p>
+        </div>
+
+        <!-- Botones de Acción -->
+        <div class="mt-8 grid grid-cols-2 gap-4">
+            <button type="button" id="cancel-budget-warning"
+                class="w-full px-4 py-3 bg-gray-200 text-gray-800 rounded-xl font-semibold hover:bg-gray-300 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400">
+                Cancelar
+            </button>
+            <button type="button" id="confirm-budget-warning"
+                class="w-full px-4 py-3 bg-red-600 text-white rounded-xl font-semibold hover:bg-red-700 transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                Registrar Gasto
+            </button>
+        </div>
+    </div>
+</div>
 <?php 
        require_once '../models/templates/footer.php';
     ?>
-
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 <script src="../controllers/registro_gastos.js"></script>

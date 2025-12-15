@@ -10,6 +10,14 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Iniciar Sesión | OrbisPay</title>
+    <link rel="icon" type="image/x-icon" href="../favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="../favicon-32x32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="../apple-touch-icon.png">
+    <meta name="theme-color" content="#1D4ED8">
+    <!-- Manifest -->
+    <!-- <link rel="manifest" href="manifest.json"> -->
+
+
     <!-- Preload de Tailwind -->
     <link href="../assets/css/output.css" rel="stylesheet">
     <!-- Preload de jQuery -->
@@ -61,10 +69,9 @@
                         <h1 class="text-2xl font-bold text-slate-900">Bienvenido de vuelta</h1>
                         <p class="mt-1 text-sm text-slate-600">Ingresa a tu cuenta para gestionar tus finanzas.</p>
                         <!-- INICIO: Mensaje de Mantenimiento -->
-                        <div class="mt-6 p-4 rounded-lg bg-amber-50 border border-amber-200">
+                        <!-- <div class="mt-6 p-4 rounded-lg bg-amber-50 border border-amber-200">
                             <div class="flex">
                                 <div class="flex-shrink-0">
-                                    <!-- Icono de advertencia -->
                                     <svg class="w-5 h-5 text-amber-500" xmlns="http://www.w3.org/2000/svg"
                                         viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                                         <path fill-rule="evenodd"
@@ -79,8 +86,10 @@
                                             estar disponibles o no operar correctamente. Agradecemos tu paciencia.</p>
                                     </div>
                                 </div>
+                                <img src="../assets/icons/avatar2.png" alt="Mantenimiento"
+                                    class="w-16 h-16 object-contain ml-4">
                             </div>
-                        </div>
+                        </div> -->
                         <!-- FIN: Mensaje de Mantenimiento -->
 
                         <form class="mt-8 space-y-5" id="loginForm" method="POST" action="#">
@@ -96,15 +105,15 @@
                                 <div class="flex items-center justify-between mb-2">
                                     <label for="password"
                                         class="block text-sm font-medium text-slate-700">Contraseña</label>
-                                    <a href="#" id="forgotPasswordLink"
-                                        class="text-sm font-medium text-primary-600 hover:text-primary-700">¿Olvidaste
-                                        tu contraseña?</a>
+
                                 </div>
                                 <input id="password" name="password" type="password" required
                                     class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-primary-200 focus:border-primary-500"
                                     placeholder="••••••••">
                             </div>
-
+                            <a href="#" id="forgotPasswordLink"
+                                class="text-sm font-medium text-primary-600 hover:text-primary-700">¿Olvidaste
+                                tu contraseña?</a>
                             <div class="flex items-center justify-between">
                                 <label for="recordar" class="inline-flex items-center gap-2 text-sm text-slate-600">
                                     <input id="recordar" type="checkbox"
@@ -147,19 +156,6 @@
                                     </svg>
                                     Google
                                 </a>
-
-                                <!-- X (Twitter) -->
-                                <!-- <a href="#"
-                                    class="inline-flex items-center justify-center w-full gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50">
-                                   
-                                    <svg class="w-5 h-5" viewBox="0 0 24 24" aria-hidden="true">
-                                        <path fill="#121212"
-                                            d="M18.244 2H21l-6.5 7.43L22.5 22h-6.9l-4.5-6.2L5.7 22H3l7.1-8.1L1.8 2h7l4 5.6L18.244 2zM16.9 20h1.8L7.2 4H5.4L16.9 20z" />
-                                    </svg>
-                                    X
-                                </a> -->
-
-                                <!-- Facebook -->
                                 <a href="#"
                                     class="inline-flex items-center justify-center w-full gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50">
                                     <svg class="w-5 h-5" viewBox="0 0 24 24" aria-hidden="true">
@@ -251,11 +247,9 @@
             </div>
         </div>
     </section>
-    <!-- ================================================== -->
-    <!-- CONTENEDOR PARA LAS NOTIFICACIONES DINÁMICAS A LA DERECHA-->
-    <!-- ================================================== -->
+
     <div id="notification-container" class="fixed top-5 right-5 z-50 space-y-3">
-        <!-- Aqui van las notificaciones -->
+
     </div>
 
     <!-- ================================================== -->
@@ -305,6 +299,13 @@
     <script>
 
     </script>
+    <!-- <script>
+    if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.register("../sw.js")
+            .then(() => console.log("SW registrado"))
+            .catch(err => console.log("Error SW:", err));
+    }
+    </script> -->
     <script src="../controllers/login.js"></script>
 </body>
 
